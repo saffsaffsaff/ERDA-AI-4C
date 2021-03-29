@@ -14,22 +14,21 @@ def aeroplanedatabase(url, folder):
     soup = BeautifulSoup(r.text, 'html.parser')
 
     images = soup.find_all('img')
-    callsign = []
-    manufacturer = []
-    type = []
-    carrier = []
 
+#loop through all the pictures/ img on webpage
     for image in images[4:]:
+        #name = alt text
         name = image['alt']
+        #image link = source link from css
         link = image['src']
+        #make link usable
         link1 = link.replace('//', 'http://', 1)
+        #make name usable
         print(name.split('----'))
-        callsign.append(name.split('----'))
-
-
-        #with open(name.replace('/', '') + '.JPG', 'wb') as f:
-        #    im = requests.get(link1)
-        #   f.write(im.content)
+        #save images as jpeg in assigned folder
+        with open(name.replace('/', '') + '.JPG', 'wb') as f:
+            im = requests.get(link1)
+            f.write(im.content)
 
 
 
