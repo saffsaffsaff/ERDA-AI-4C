@@ -10,10 +10,10 @@ def aeroplanedatabase(url, folder):
     os.chdir((os.path.join(os.getcwd(), folder)))
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'html.parser')
-
+    #find all images on a webpage by searching for the <img> tag
     images = soup.find_all('img')
 
-#loop through all the pictures/ img on webpage
+    #loop through all the images on webpage
     for image in images[4:]:
         #name = alt text
         name = image['alt']
