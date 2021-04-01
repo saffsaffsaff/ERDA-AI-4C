@@ -7,7 +7,7 @@ fleet_carriers = []
 manufacturers = []
 i = 0
 
-for filename in glob.iglob(r'page 1' + '**/*.jpg', recursive=True):
+for filename in glob.iglob(r'page 1' + '**/*.JPG', recursive=True):
     i += 1
     if i == 101:
         break
@@ -34,3 +34,16 @@ print('type: ', type_array)
 print('number of types: ', len(tuple(type_array)))
 #print('fleet_carrier: ', fleet_carrier_array)
 #print('manufacturer: ', manufacturer_array)
+
+
+## Create Excel Sheet - Appendix with table of aeroplanes
+import os
+import pandas as pd
+
+array = [['a1', 'a2', 'a3'],
+         ['a4', 'a5', 'a6'],
+         ['a7', 'a8', 'a9'],
+         ['a10', 'a11', 'a12', 'a13', 'a14']]
+
+df = pd.DataFrame(array).T
+df.to_excel(excel_writer = os.getcwd() + 'appendixa.xlsx')
