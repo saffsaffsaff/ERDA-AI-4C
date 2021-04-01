@@ -36,19 +36,23 @@ print('type: ', type_array)
 print('fleet_carrier: ', fleet_carrier_array)
 print('manufacturer: ', manufacturer_array)
 
-for i in range(0, 20):
+def number_diff_elements(list):
     for i in range(0, 100):
-        if i >= len(types):
-            break
-        n = types.count(types[i])
-        if n > 1:
-            types.remove(types[i])
+        for i in range(0, 100):
+            if i >= len(list):
+                break
+            n = list.count(list[i])
+            if n > 1:
+                list.remove(list[i])
+    return list
 
-print('number of types is: ', len(types))
-print(types)
+print('number of codes is: ', len(number_diff_elements(codes)))
+print('number of types is: ', len(number_diff_elements(types)))
+print('number of fleetcarriers is: ', len(number_diff_elements(fleet_carriers)))
+print('number of manufacturers is: ', len(number_diff_elements(manufacturers)))
 
-''''## Create Excel Sheet - Appendix with table of aeroplanes
-import os
+## Create Excel Sheet - Appendix with table of aeroplanes
+'''import os
 import pandas as pd
 
 array = [['a1', 'a2', 'a3'],
