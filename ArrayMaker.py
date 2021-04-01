@@ -5,8 +5,12 @@ codes = []
 types = []
 fleet_carriers = []
 manufacturers = []
+i = 0
 
 for filename in glob.iglob(r'page 1' + '**/*.jpg', recursive=True):
+    i += 1
+    if i == 101:
+        break
     #only use the last part of the image name which gives info about aircraft
     split_string = filename.split("page 1")
     substring = split_string[1]
@@ -18,7 +22,6 @@ for filename in glob.iglob(r'page 1' + '**/*.jpg', recursive=True):
     types.append(sub3string[1])
     fleet_carriers.append(subsubstring[-1][:-4])
     manufacturers.append(sub3string[0])
-    print(filename)
 
 #convert the lists to arrays
 code_array = np.array(codes)
@@ -26,7 +29,8 @@ type_array = np.array(types)
 fleet_carrier_array = np.array(fleet_carriers)
 manufacturer_array = np.array(manufacturers)
 
-print('code: ', code_array)
+#print('code: ', code_array)
 print('type: ', type_array)
-print('fleet_carrier: ', fleet_carrier_array)
-print('manufacturer: ', manufacturer_array)
+print('number of types: ', len(tuple(type_array)))
+#print('fleet_carrier: ', fleet_carrier_array)
+#print('manufacturer: ', manufacturer_array)
