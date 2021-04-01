@@ -13,7 +13,7 @@ def get_specs(file):
     return subsubstring[0][1:], sub3string[1], subsubstring[-1][:-4], sub3string[0]  # code, type, fleet carrier, manufacturer
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # if this file is run
     codes = []
     types = []
     fleet_carriers = []
