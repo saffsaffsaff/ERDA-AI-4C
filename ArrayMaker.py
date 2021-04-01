@@ -7,25 +7,33 @@ fleet_carriers = []
 manufacturers = []
 i = 0
 
-#go over the pictures in the database one by one
+
+def get_specs(file):
+    # only use the last part of the image name which gives info about the aircraft
+    split_string = file.split("page 1")
+    substring = split_string[1]
+    # split info about aircraft into parts
+    subsubstring = substring.split(" - ")
+    sub3string = subsubstring[1].split(' ')
+    # remove .jpg or a slash and return
+    return subsubstring[0][1:], sub3string[1], subsubstring[-1][:-4], sub3string[0]
+
+
+# go over the pictures in the database one by one
 for filename in glob.iglob(r'page 1' + '**/*.JPG', recursive=True):
-    #make sure it takes 100 pictures and not more
+    # make sure it takes 100 pictures and not more
     i += 1
     if i == 101:
         break
-    #only use the last part of the image name which gives info about the aircraft
-    split_string = filename.split("page 1")
-    substring = split_string[1]
-    #split info about aircraft into parts
-    subsubstring = substring.split(" - ")
-    sub3string = subsubstring[1].split(' ')
-    #add each information part to a list and remove .jpg or a slash
-    codes.append(subsubstring[0][1:])
-    types.append(sub3string[1])
-    fleet_carriers.append(subsubstring[-1][:-4])
-    manufacturers.append(sub3string[0])
 
-#convert the lists to arrays
+    code, aircraft_type, fleet_carrier, manufacturer = get_specs(filename)
+
+    codes.append(code)
+    types.append(aircraft_type)
+    fleet_carriers.append(fleet_carrier)
+    manufacturers.append(manufacturer)
+
+# convert the lists to arrays
 code_array = np.array(codes)
 type_array = np.array(types)
 fleet_carrier_array = np.array(fleet_carriers)
@@ -36,6 +44,7 @@ print('type: ', type_array)
 print('fleet_carrier: ', fleet_carrier_array)
 print('manufacturer: ', manufacturer_array)
 
+
 def number_diff_elements(list):
     for i in range(0, 100):
         for i in range(0, 100):
@@ -45,6 +54,7 @@ def number_diff_elements(list):
             if n > 1:
                 list.remove(list[i])
     return list
+
 
 print('number of codes is: ', len(number_diff_elements(codes)))
 print('number of types is: ', len(number_diff_elements(types)))

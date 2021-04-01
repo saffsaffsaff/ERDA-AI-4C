@@ -7,17 +7,17 @@ def color_distribution(path, top_left, bottom_right):
     no_pixels = width * height
 
     pix = Image.open(path).load()
-    occurrences = np.zeros((3, 256))
-    avg_locations = np.zeros((3, 256, 2))
-    avg_locations_sq = np.zeros((3, 256, 2))
+    occurrences = np.zeros((5, 5, 5))
+    avg_locations = np.zeros((5, 5, 5, 2))
+    avg_locations_sq = np.zeros((5, 5, 5, 2))
     for r in range(top_left[1], bottom_right[1]+1):
         for c in range(top_left[0], bottom_right[0]+1):
-            for i in range(3):
-                occurrences[i][pix[c, r][i]] += 1/no_pixels
-                no_color = occurrences[i][pix[c, r][i]] * no_pixels  # current total number of pixels with this shade
-                avg_locations[i][pix[c, r][i]][0] = avg_locations[i][pix[c, r][i]][0] * (no_color - 1) / no_color + (c - top_left[0]) / (width-1) / no_color  # iterative average of x-coordinate
-                avg_locations[i][pix[c, r][i]][1] = avg_locations[i][pix[c, r][i]][1] * (no_color - 1) / no_color + (r - top_left[1]) / (height-1) / no_color  # iterative average of y-coordinate
-                avg_locations_sq[i][pix[c, r][i]][0] = avg_locations_sq[i][pix[c, r][i]][0] * (no_color - 1) / no_color + ((c - top_left[0]) / (width-1))**2 / no_color  # iterative average of x-coordinate squared
-                avg_locations_sq[i][pix[c, r][i]][1] = avg_locations_sq[i][pix[c, r][i]][1] * (no_color - 1) / no_color + ((r - top_left[1]) / (height-1))**2 / no_color  # iterative average of y-coordinate squared
+            color = (int(pix[c, r][0]/51.2), int(pix[c, r][1]/51.2), int(pix[c, r][2]/51.2))  # from (0-255, 0-255, 0-255) to (0-4, 0-4, 0-4), i.e., 125 different colors
+            occurrences[color[0]][color[1]][color[2]] += 1 / no_pixels
+            no_color = occurrences[color[0]][color[1]][color[2]] * no_pixels  # current total number of pixels with this color
+            avg_locations[color[0]][color[1]][color[2]][0] = avg_locations[color[0]][color[1]][color[2]][0] * (no_color - 1) / no_color + (c - top_left[0] + 0.5) / width / no_color  # iterative average of x-coordinate
+            avg_locations[color[0]][color[1]][color[2]][1] = avg_locations[color[0]][color[1]][color[2]][1] * (no_color - 1) / no_color + (r - top_left[0] + 0.5) / height / no_color  # iterative average of y-coordinate
+            avg_locations_sq[color[0]][color[1]][color[2]][0] = avg_locations_sq[color[0]][color[1]][color[2]][0] * (no_color - 1) / no_color + ((c - top_left[0] + 0.5) / width) ** 2 / no_color  # iterative average of x-coordinate squared
+            avg_locations_sq[color[0]][color[1]][color[2]][1] = avg_locations_sq[color[0]][color[1]][color[2]][1] * (no_color - 1) / no_color + ((r - top_left[0] + 0.5) / height) ** 2 / no_color  # iterative average of y-coordinate squared
 
     return occurrences, avg_locations, avg_locations_sq
