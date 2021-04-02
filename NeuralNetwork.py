@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 class NN:
     def __init__(self, data, no_input_values, no_output_values, no_neurons_first_layer, learning_rate,
-                 cost_value_desired):
+                 cost_value_desired_batch):
         """
         Method to define Class parameters
 
@@ -121,5 +121,36 @@ class NN:
 
         return dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer
 
-    def steepest_descent(self, dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer):
-        
+    def steepest_descent(self, batch_input_data, batch_expected_results):
+        """
+
+        :param batch_input_data:
+        :param batch_expected_results:
+        :return:
+        """
+        # Setup the average batch cost to be higher than treshold, so that loop in initiated
+        average_cost = self.cost_value_desired + 1
+        while average_cost > self.cost_value_desired:
+            # Setup arrays to store the result from each case
+            db_first_layer_batch = dw_first_layer_batch = dw_second_layer_batch = db_second_layer_batch = cost_batch = \
+                []
+
+            # Iterate over batch and append teh results to arrays
+            for (input_data, expected_result) in (batch_input_data, batch_expected_results):
+                first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total = \
+                    self.nn_execution(input_data, expected_result)
+                dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer = \
+                    self.nn_gradient_function_calculation(input_data, first_layer, first_linear_layer, second_layer,
+                                                          second_linear_layer, output_layer, expected_result)
+                db_first_layer_batch.append(- self.learning_rate * dc_db_first_layer)
+                dw_first_layer_batch.append(- self.learning_rate * dc_dw_first_layer)
+                db_second_layer_batch.append(- self.learning_rate * dc_db_second_layer)
+                dw_second_layer_batch.append(- self.learning_rate * dc_dw_second_layer)
+                cost_batch.append(cost_total)
+
+            # Find average values and modify weight matrices and bias vectors
+            db_first_layer_batch = np.array(db_first_layer_batch)
+            dw_first_layer_batch = np.array(dw_first_layer_batch)
+            db_second_layer_batch = np.array(db_second_layer_batch)
+            dw_second_layer_batch = np.array(dw_second_layer_batch)
+            cost_batch = np.array(cost_batch)
