@@ -1,26 +1,32 @@
-import numpy as np
+import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 
 
 class NN:
-    def __init__(self, data, no_input_values, no_output_values, no_neurons_first_layer, learning_rate,
+    def __init__(self, dataframe_path, no_types, no_carriers, no_neurons_first_layer, learning_rate,
                  cost_value_desired_batch):
         """
         Method to define Class parameters
 
-        :param data: DataFrame with processed data
-        :param no_input_values: Number of input variables - needs change to automatic detection
-        :param no_output_values: Number of output variables - needs change to automatic detection
+        :param dataframe_path: path to DataFrame with processed data
+        :param no_types: Number of different aircraft types
+        :param no_carriers: Number of different fleet carriers
         :param no_neurons_first_layer: Number of neurons for the first layer
         """
         # Import dataframe
-        # Create wights matrices and bias vectors with random values
+        df = pd.read_pickle(dataframe_path)
+        self.input_data = df[df.columns[4:]].to_numpy()
+        self.no_inputs = self.input_data.shape[1]
+        self.no_outputs = no_types + no_carriers
+        self.correct_outputs = df[df.columns[2:5]].to_numpy()
+
+        # Create weights matrices and bias vectors with random values
         # For the first layer
-        self.weights_first_layer = np.random.rand(no_neurons_first_layer, no_input_values)
+        self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_inputs)
         self.bias_first_layer = np.random.rand(no_neurons_first_layer, 1)
         # For the second layer. This is the last layer before output layer, so it needs to have the same amount of
         # neurons
-        no_neurons_second_layer = no_output_values
+        no_neurons_second_layer = self.no_outputs
         self.weights_second_layer = np.random.rand(no_neurons_second_layer, no_neurons_first_layer)
         self.bias_second_layer = np.random.rand(no_neurons_second_layer, 1)
         # Assign other parameters
@@ -30,43 +36,35 @@ class NN:
     # Create activating functions and their derivatives
     @staticmethod
     def f_quadratic(x):
-        y = x**2
-        return y
+        return x**2
 
     @staticmethod
     def f_quadratic_derivative(x):
-        y = 2 * x
-        return y
+        return 2 * x
 
     @staticmethod
     def f_cubic(x):
-        y = x**3
-        return y
+        return x**3
 
     @staticmethod
     def f_cubic_derivative(x):
-        y = 3 * x**2
-        return y
+        return 3 * x**2
 
     @staticmethod
     def f_sigmoid(x):
-        y = 1/(1 + np.exp(-x))
-        return y
+        return 1/(1 + np.exp(-x))
 
     @staticmethod
     def f_sigmoid_derivative(x):
-        y = NN.f_sigmoid(x)(1 - NN.f_sigmoid(x))
-        return y
+        return NN.f_sigmoid(x)(1 - NN.f_sigmoid(x))
 
     @staticmethod
     def f_cost(x, x_true):
-        y = (x - x_true) ** 2
-        return y
+        return (x - x_true) ** 2
 
     @staticmethod
     def f_cost_derivative(x, x_true):
-        y = 2 * (x - x_true)
-        return y
+        return 2 * (x - x_true)
 
     def nn_execution(self, input_data, expected_result):
         """
