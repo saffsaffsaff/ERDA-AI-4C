@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 
 
 class NN:
-    def __init__(self, data, no_input_values, no_output_values, no_neurons_first_layer):
+    def __init__(self, data, no_input_values, no_output_values, no_neurons_first_layer, learning_rate,
+                 cost_value_desired):
         """
         Method to define Class parameters
 
@@ -11,19 +12,22 @@ class NN:
         :param no_input_values: Number of input variables - needs change to automatic detection
         :param no_output_values: Number of output variables - needs change to automatic detection
         :param no_neurons_first_layer: Number of neurons for the first layer
-        :param no_neurons_second_layer: Number of neurons for the second layer
         """
         # Import dataframe
         # Create wights matrices and bias vectors with random values
         # For the first layer
-        self.weights_first_layer = np.random.rand(no_input_values, no_input_values)
+        self.weights_first_layer = np.random.rand(no_neurons_first_layer, no_input_values)
         self.bias_first_layer = np.random.rand(no_neurons_first_layer, 1)
         # For the second layer. This is the last layer before output layer, so it needs to have the same amount of
         # neurons
         no_neurons_second_layer = no_output_values
-        self.weights_second_layer = np.random.rand(no_neurons_first_layer, no_neurons_first_layer)
+        self.weights_second_layer = np.random.rand(no_neurons_second_layer, no_neurons_first_layer)
         self.bias_second_layer = np.random.rand(no_neurons_second_layer, 1)
+        # Assign other parameters
+        self.learning_rate = learning_rate
+        self.cost_value_desired = cost_value_desired
 
+    # Create activating functions and their derivatives
     @staticmethod
     def f_quadratic(x):
         y = x**2
@@ -67,41 +71,55 @@ class NN:
     def nn_execution(self, input_data, expected_result):
         """
 
-        Method to execute NN algorithm and return all the layers
+        Method to execute NN algorithm, return all the layers, and the cost function value
 
         :param input_data: An array of input values
         :param expected_result: An array of expected output_result
         :return:
         """
-
-        first_layer = NN.f_quadratic(self.weights_first_layer * input_data + self.bias_first_layer)
-        second_layer = NN.f_cubic(self.weights_second_layer * input_data + self.bias_second_layer)
+        first_linear_layer = self.weights_first_layer.dot(input_data) + self.bias_first_layer
+        first_layer = NN.f_quadratic(first_linear_layer)
+        second_linear_layer = self.weights_second_layer.dot(first_layer) + self.bias_second_layer
+        second_layer = NN.f_cubic(second_linear_layer)
         output_layer = NN.f_sigmoid(second_layer)
         cost_vector = NN.f_cost(output_layer, expected_result)
         cost_total = np.sum(cost_vector)
 
         # Determine which aircraft is chosen
 
-        return first_layer, second_layer, output_layer, cost_total
+        return first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total
 
-    def nn_gradient_function_calculation(self, input_data, first_layer, second_layer, output_layer, expected_result):
+    def nn_gradient_function_calculation(self, input_data, first_layer, first_linear_layer, second_layer,
+                                         second_linear_layer, output_layer, expected_result):
         """
 
         Method for gradient determination of Cost function with respect to weights and biases
 
         :param input_data: An array of input_data
         :param first_layer: An array with values of first layer of neurons
+        :param first_linear_layer: An array with values of first layer of neurons before activating function was applied
         :param second_layer: An array with values of second layer of neurons
+        :param second_linear_layer: An array with values of second layer of neurons before activating function was
+        applied
         :param output_layer: An array with output layer of neurons
         :param expected_result: An array with expected/true result
         :return:
         """
-        # Apply chain rule to get common part for all derivatives with respect to wieghts and biases at both layers
-        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid(second_layer) * \
-                             NN.f_cubic_derivative(self.weights_second_layer * first_layer + self.bias_second_layer)
 
-        # Find derivatives with respect to all weights and biases
-        dc_dw_first_layer =
-        dc_db_first_layer =
-        dc_dw_second_layer = np.tile(first_layer,)
+        # Apply chain rule to get common part for all derivatives with respect to weights and biases at both layers
+        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid(second_layer) * \
+                           NN.f_cubic_derivative(second_linear_layer)
+
+        # Find derivatives with respect to all weights and biases.
+        dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
+                            dummy_derivative
+        dc_dw_first_layer = (((np.tile(input_data, self.weights_first_layer.shape[0]).T *
+                             NN.f_quadratic_derivative(first_linear_layer)).T * self.weights_second_layer.T).T *
+                             dummy_derivative).T
+        dc_dw_second_layer = (np.tile(first_layer, self.weights_second_layer.shape[0]).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
+
+        return dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer
+
+    def steepest_descent(self, dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer):
+        
