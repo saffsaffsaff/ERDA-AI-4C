@@ -26,47 +26,38 @@ class NN:
 
     @staticmethod
     def f_quadratic(x):
-        y = x**2
-        return y
+        return x**2
 
     @staticmethod
     def f_quadratic_derivative(x):
-        y = 2 * x
-        return y
+        return 2 * x
 
     @staticmethod
     def f_cubic(x):
-        y = x**3
-        return y
+        return x**3
 
     @staticmethod
     def f_cubic_derivative(x):
-        y = 3 * x**2
-        return y
+        return 3 * x**2
 
     @staticmethod
     def f_sigmoid(x):
-        y = 1/(1 + np.exp(-x))
-        return y
+        return 1/(1 + np.exp(-x))
 
     @staticmethod
     def f_sigmoid_derivative(x):
-        y = NN.f_sigmoid(x)(1 - NN.f_sigmoid(x))
-        return y
+        return NN.f_sigmoid(x)(1 - NN.f_sigmoid(x))
 
     @staticmethod
     def f_cost(x, x_true):
-        y = (x - x_true) ** 2
-        return y
+        return (x - x_true) ** 2
 
     @staticmethod
     def f_cost_derivative(x, x_true):
-        y = 2 * (x - x_true)
-        return y
+        return 2 * (x - x_true)
 
     def nn_execution(self, input_data, expected_result):
         """
-
         Method to execute NN algorithm and return all the layers
 
         :param input_data: An array of input values
@@ -86,7 +77,6 @@ class NN:
 
     def nn_gradient_function_calculation(self, input_data, first_layer, second_layer, output_layer, expected_result):
         """
-
         Method for gradient determination of Cost function with respect to weights and biases
 
         :param input_data: An array of input_data
