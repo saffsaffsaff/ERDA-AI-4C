@@ -8,9 +8,11 @@ def get_specs(file):
     substring = split_string[1]
     # split info about aircraft into parts
     subsubstring = substring.split(" - ")
+    subbsubbstring = subsubstring[-1][:-4].split(' (')
     sub3string = subsubstring[1].split(' ')
+    sub4string = sub3string[1].split('-')
     # remove .jpg or a slash and return
-    return subsubstring[0][1:], sub3string[1], subsubstring[-1][:-4], sub3string[0]  # code, type, fleet carrier, manufacturer
+    return subsubstring[0][1:], sub4string[0], subbsubbstring[0], sub3string[0]  # code, type, fleet carrier, manufacturer
 
 
 if __name__ == '__main__':  # if this file is run
@@ -59,7 +61,7 @@ if __name__ == '__main__':  # if this file is run
 
     print('number of codes is: ', len(number_diff_elements(codes)))
     print('number of types is: ', len(number_diff_elements(types)))
-    print('number of fleetcarriers is: ', len(number_diff_elements(fleet_carriers)))
+    print('number of fleetcarriers is: ', len(number_diff_elements(fleet_carriers)), number_diff_elements(fleet_carriers))
     print('number of manufacturers is: ', len(number_diff_elements(manufacturers)))
 
     ## Create Excel Sheet - Appendix with table of aeroplanes
