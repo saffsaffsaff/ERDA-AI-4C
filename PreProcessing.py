@@ -6,6 +6,7 @@ from ArrayMaker import get_specs
 df = pd.DataFrame()
 filenames = list(glob.iglob(r'page 1' + '**/*.jpg', recursive=True))
 no_files = len(filenames)
+print(no_files)
 
 types, carriers = zip(*[get_specs(file)[1:3] for file in filenames])
 types, carriers = list(set(types)), list(set(carriers))

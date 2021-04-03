@@ -1,4 +1,4 @@
-import numpy as np, pandas as pd
+import numpy as np, pandas as pd, random
 import matplotlib.pyplot as plt
 
 
@@ -17,7 +17,7 @@ class NN:
         # Import dataframe
         df = pd.read_pickle(dataframe_path)
         self.input_data = df[df.columns[4:]].to_numpy()
-        self.no_inputs = self.input_data.shape[1]
+        self.no_inputs, self.no_input_neurons = self.input_data.shape
         self.no_outputs = no_types + no_carriers
         self.correct_outputs = df[df.columns[2:4]].to_numpy()
         # create numpy array of the correct output values for each neuron (number of images) X (number of output neurons)
@@ -28,7 +28,7 @@ class NN:
 
         # Create weights matrices and bias vectors with random values
         # For the first layer
-        self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_inputs)
+        self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_input_neurons)
         self.bias_first_layer = np.random.rand(no_neurons_first_layer, 1)
         # For the second layer. This is the last layer before output layer, so it needs to have the same amount of
         # neurons
@@ -74,7 +74,6 @@ class NN:
 
     def nn_execution(self, input_data, expected_result):
         """
-
         Method to execute NN algorithm, return all the layers, and the cost function value
 
         :param input_data: An array of input values
@@ -96,7 +95,6 @@ class NN:
     def nn_gradient_function_calculation(self, input_data, first_layer, first_linear_layer, second_layer,
                                          second_linear_layer, output_layer, expected_result):
         """
-
         Method for gradient determination of Cost function with respect to weights and biases
 
         :param input_data: An array of input_data
@@ -125,17 +123,16 @@ class NN:
 
         return dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer
 
-    def steepest_descent(self, batch_input_data, batch_expected_results, batch_size):
+    def update_weights_and_biases(self, batch_input_data, batch_expected_results):
         """
-
         Function to apply steepest descent to update weight matrices and bias vectors for a single batch
 
         :param batch_input_data: The list containing input data for cases in batch
         :param batch_expected_results: The list containing expected results for cases in batch
-        :param batch_size: The size of the batch
         :return:
         """
-        # Setup the average batch cost to be higher than treshold, so that loop is initiated
+        batch_size = batch_input_data.shape[0]
+        # Setup the average batch cost to be higher than threshold, so that loop is initiated
         batch_average_cost = self.cost_value_desired + 1
         iteration = 0
         # Setup the lists to store iteration number and average cost batch on that iteration:
@@ -179,8 +176,24 @@ class NN:
             self.bias_second_layer += db_second_layer_average
             self.weights_second_layer += dw_second_layer_average
 
-        fig = plt.figure()
-        convergance_graph = fig.add_subplot(111, title="Average cost value per iteration")
-        convergance_graph.plot(iterations_storage, batch_average_costs_storage)
-        convergance_graph.x_label("Average cost value")
-        convergance_graph.y_label("Iteration")
+        # fig = plt.figure()
+        # convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
+        # convergence_graph.plot(iterations_storage, batch_average_costs_storage)
+        # convergence_graph.x_label("Average cost value")
+        # convergence_graph.y_label("Iteration")
+
+    def train(self, batch_size: int, training_data_fraction: float):
+        # split input data into training data and checking data based on the training data fraction
+        random_range = random.sample(range(self.no_inputs), self.no_inputs)
+        training_data, training_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[:int(self.no_inputs * training_data_fraction)]])
+        checking_data, checking_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[int(self.no_inputs * training_data_fraction):]])
+
+        # split training data into batches, e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
+        batches = [training_data[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)]
+        batches_output = [training_data_output[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)]
+
+        for batch, batch_output in zip(batches, batches_output):
+            self.update_weights_and_biases(batch, batch_output)
+
+        self.check_accuracy(training_data, training_data_output, checking_data, checking_data_output)
+
