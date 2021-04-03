@@ -18,10 +18,12 @@ class NN:
         df = pd.read_pickle(dataframe_path)
         self.input_data = df[df.columns[4:]].to_numpy()
         self.no_inputs, self.no_input_neurons = self.input_data.shape
+        self.no_types = no_types
+        self.no_carriers = no_carriers
         self.no_outputs = no_types + no_carriers
         self.correct_outputs = df[df.columns[2:4]].to_numpy()
-        # create numpy array of the correct output values for each neuron (number of images)X(number of output neurons)
-        self.correct_outputs_nn_format = np.zeros((len(self.correct_outputs), self.no_outputs))
+        # create numpy array of the correct output values for each neuron (number of images) X (number of output neurons)
+        self.correct_outputs_nn_format = np.zeros((self.no_inputs, self.no_outputs))
         for i, img in enumerate(self.correct_outputs):
             self.correct_outputs_nn_format[i][int(img[0])] = 1
             self.correct_outputs_nn_format[i][int(img[1]) + no_types] = 1
@@ -183,31 +185,72 @@ class NN:
         convergence_graph.y_label("Iteration")
         plt.show()
 
-    def check_accuracy(self, training_data, training_data_output, checking_data, checking_data_output):
-        cost_training = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in
-                         zip(training_data, training_data_output)]
-        cost_checking = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in
-                         zip(checking_data, checking_data_output)]
+    def check_accuracy(self, training_data, training_data_correct_output_nn_format, training_data_correct_output,
+                       checking_data, checking_data_correct_output_nn_format, checking_data_correct_output):
+        """ Determines the accuracy of the neural network and plots the comparison between the training data and checking data. """
+        output_training = [self.nn_execution(input_data, output_data)[-2] for input_data, output_data in zip(training_data, training_data_correct_output_nn_format)]
+        output_checking = [self.nn_execution(input_data, output_data)[-2] for input_data, output_data in zip(checking_data, checking_data_correct_output_nn_format)]
 
-        print((min(cost_training), max(cost_training), sum(cost_training) / len(cost_training)),
-              (min(cost_checking), max(cost_checking), sum(cost_checking) / len(cost_checking)))
+        output_training_choice = [(np.argmax(img[:self.no_types]), np.argmax(img[self.no_types:]) + self.no_types) for i, img in enumerate(output_training)]
+        output_checking_choice = [(np.argmax(img[:self.no_types]), np.argmax(img[self.no_types:]) + self.no_types) for i, img in enumerate(output_checking)]
+
+        # create lists for aircraft types and fleet carriers consisting of the number of correct and wrong answers
+        types_results_training = np.zeros((self.no_types, 2))
+        carriers_results_training = np.zeros((self.no_carriers, 2))
+        for i, output in enumerate(training_data_correct_output):
+            types_results_training[int(output[0])] += np.array([1, 0]) if output[0] == output_training_choice[i][0] else np.array([0, 1])
+            carriers_results_training[int(output[1])] += np.array([1, 0]) if output[1] == output_training_choice[i][1] else np.array([0, 1])
+        types_results_checking = np.zeros((self.no_types, 2))
+        carriers_results_checking = np.zeros((self.no_carriers, 2))
+        for i, output in enumerate(checking_data_correct_output):
+            types_results_checking[int(output[0])] += np.array([1, 0]) if output[0] == output_checking_choice[i][0] else np.array([0, 1])
+            carriers_results_checking[int(output[1])] += np.array([1, 0]) if output[1] == output_checking_choice[i][1] else np.array([0, 1])
+
+        # some pyplot stuff
+        bars_types_training = [aircraft_type[0] / sum(aircraft_type) * 100 for aircraft_type in types_results_training]
+        bars_carrier_training = [carrier[0] / sum(carrier) * 100 for carrier in carriers_results_training]
+        bars_types_checking = [aircraft_type[0] / sum(aircraft_type) * 100 for aircraft_type in types_results_checking]
+        bars_carrier_checking = [carrier[0] / sum(carrier) * 100 for carrier in carriers_results_checking]
+
+        type_labels = ['A319', 'A320', 'A318', '190', 'A321', '747', 'A330', 'A350', '757', '737', '787', '170', '767', '777']
+        carrier_labels = ['EgyptAir', 'Suparna Airlines', 'China Eastern Airlines', 'easyJet', 'Delta Air Lines', 'Corendon Dutch Airlines',
+                          'Romanian Air Transport', 'Garuda Indonesia', 'AnadoluJet', 'Air Arabia Maroc', 'KLM', 'Saudi Arabian Airlines',
+                          'Aer Lingus', 'Emirates', 'Air China Cargo', 'Blue Air', 'Titan Airways', 'Air France', 'Aeroflot', 'Alitalia']
+
+        x1 = np.arange(len(type_labels))  # the label locations
+        x2 = np.arange(len(carrier_labels))
+        width = 0.35  # the width of the bars
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, sharey='row')
+        ax1.bar(x1 - width / 2, bars_types_training, width, label='Training data')
+        ax1.bar(x1 + width / 2, bars_types_checking, width, label='Checking data')
+        ax2.bar(x2 - width / 2, bars_carrier_training, width, label='Training data')
+        ax2.bar(x2 + width / 2, bars_carrier_checking, width, label='Checking data')
+
+        ax1.set_ylabel('Accuracy [%]')
+        ax1.set_xticks(x1)
+        ax1.set_xticklabels(type_labels)
+        ax1.legend()
+        ax2.set_xticks(x2)
+        ax2.set_xticklabels(carrier_labels)
+        ax2.legend()
+
+        fig.tight_layout()
+        plt.show()
 
     def train(self, batch_size: int, training_data_fraction: float):
+        """ Splits data in training and checking data, creates batches, trains the neural network, and checks the accuracy. """
         # split input data into training data and checking data based on the training data fraction
         print("splitting data ...  ", end='')
         random_range = random.sample(range(self.no_inputs), self.no_inputs)
-        training_data, training_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in
-                                                    random_range[:int(self.no_inputs * training_data_fraction)]])
-        checking_data, checking_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in
-                                                    random_range[int(self.no_inputs * training_data_fraction):]])
+        training_data, training_data_output, training_data_output_nn_format = zip(*[(self.input_data[i], self.correct_outputs[i], self.correct_outputs_nn_format[i]) for i in random_range[:int(self.no_inputs * training_data_fraction)]])
+        checking_data, checking_data_output, checking_data_output_nn_format = zip(*[(self.input_data[i], self.correct_outputs[i], self.correct_outputs_nn_format[i]) for i in random_range[int(self.no_inputs * training_data_fraction):]])
         print("done")
 
         # split training data into batches, e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
         print("creating batches ...  ", end='')
-        batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i
-                            in range((len(training_data) + batch_size - 1) // batch_size)])
-        batches_output = np.array([training_data_output[i * batch_size:(i + 1) * batch_size] for i
-                                   in range((len(training_data) + batch_size - 1) // batch_size)])
+        batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
+        batches_output = np.array([training_data_output_nn_format[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
         print("done")
 
         for batch, batch_output in zip(batches, batches_output):
@@ -216,7 +259,7 @@ class NN:
             print("done")
 
         print("Results:")
-        self.check_accuracy(training_data, training_data_output, checking_data, checking_data_output)
+        self.check_accuracy(training_data, training_data_output, training_data_output_nn_format, checking_data, checking_data_output, checking_data_output_nn_format)
 
 
 neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 5)
