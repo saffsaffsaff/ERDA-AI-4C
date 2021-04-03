@@ -19,7 +19,12 @@ class NN:
         self.input_data = df[df.columns[4:]].to_numpy()
         self.no_inputs = self.input_data.shape[1]
         self.no_outputs = no_types + no_carriers
-        self.correct_outputs = df[df.columns[2:5]].to_numpy()
+        self.correct_outputs = df[df.columns[2:4]].to_numpy()
+        # create numpy array of the correct output values for each neuron (number of images) X (number of output neurons)
+        self.correct_outputs_nn_format = np.zeros((len(self.correct_outputs), self.no_outputs))
+        for i, img in enumerate(self.correct_outputs):
+            self.correct_outputs_nn_format[i][int(img[0])] = 1
+            self.correct_outputs_nn_format[i][int(img[1]) + no_types] = 1
 
         # Create weights matrices and bias vectors with random values
         # For the first layer
