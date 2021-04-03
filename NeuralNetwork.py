@@ -20,7 +20,7 @@ class NN:
         self.no_inputs, self.no_input_neurons = self.input_data.shape
         self.no_outputs = no_types + no_carriers
         self.correct_outputs = df[df.columns[2:4]].to_numpy()
-        # create numpy array of the correct output values for each neuron (number of images) X (number of output neurons)
+        # create numpy array of the correct output values for each neuron (number of images)X(number of output neurons)
         self.correct_outputs_nn_format = np.zeros((len(self.correct_outputs), self.no_outputs))
         for i, img in enumerate(self.correct_outputs):
             self.correct_outputs_nn_format[i][int(img[0])] = 1
@@ -115,8 +115,9 @@ class NN:
         # Find derivatives with respect to all weights and biases.
         dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
                             dummy_derivative
-        dc_dw_first_layer = (((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
-                             NN.f_quadratic_derivative(first_linear_layer)).dot(self.weights_second_layer.T)).dot(dummy_derivative)).T
+        dc_dw_first_layer = ((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
+                             NN.f_quadratic_derivative(first_linear_layer) * self.weights_second_layer).T
+                             * dummy_derivative).T
         dc_dw_second_layer = (np.tile(first_layer, (self.weights_second_layer.shape[0], 1)).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
 
@@ -139,7 +140,8 @@ class NN:
         # Initiate loop
         while batch_average_cost > self.cost_value_desired:
             # Setup lists to store the results from each case
-            db_first_layer_storage, dw_first_layer_storage, dw_second_layer_storage, db_second_layer_storage, cases_costs_storage = [], [], [], [], []
+            db_first_layer_storage, dw_first_layer_storage, dw_second_layer_storage, db_second_layer_storage,\
+            cases_costs_storage = [], [], [], [], []
 
             # Iterate over batch and to get the results of each case
             for (input_data, expected_result) in zip(batch_input_data, batch_expected_results):
@@ -151,17 +153,17 @@ class NN:
 
                 # Append the case results of storage lists
 
-                db_first_layer_storage.append((- self.learning_rate * dc_db_first_layer).tolist())
-                dw_first_layer_storage.append((- self.learning_rate * dc_dw_first_layer).tolist())
-                db_second_layer_storage.append((- self.learning_rate * dc_db_second_layer).tolist())
-                dw_second_layer_storage.append((- self.learning_rate * dc_dw_second_layer).tolist())
+                db_first_layer_storage.append(- self.learning_rate * dc_db_first_layer)
+                dw_first_layer_storage.append(- self.learning_rate * dc_dw_first_layer)
+                db_second_layer_storage.append(- self.learning_rate * dc_db_second_layer)
+                dw_second_layer_storage.append(- self.learning_rate * dc_dw_second_layer)
                 cases_costs_storage.append(case_cost)
 
             # Find average values for whole batch
-            db_first_layer_average = np.sum(np.array(db_first_layer_storage), axis=0) / batch_size
-            dw_first_layer_average = np.sum(np.array(dw_first_layer_storage), axis=0) / batch_size
-            db_second_layer_average = np.sum(np.array(db_second_layer_storage), axis=0) / batch_size
-            dw_second_layer_average = np.sum(np.array(dw_second_layer_storage), axis=0) / batch_size
+            db_first_layer_average = sum(db_first_layer_storage) / batch_size
+            dw_first_layer_average = sum(dw_first_layer_storage) / batch_size
+            db_second_layer_average = sum(db_second_layer_storage) / batch_size
+            dw_second_layer_average = sum(dw_second_layer_storage) / batch_size
             batch_average_cost = sum(cases_costs_storage) / batch_size
 
             # Update the iteration number and store the average cost value of the batch
@@ -175,30 +177,38 @@ class NN:
             self.bias_second_layer += db_second_layer_average
             self.weights_second_layer += dw_second_layer_average
 
-        # fig = plt.figure()
-        # convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
-        # convergence_graph.plot(iterations_storage, batch_average_costs_storage)
-        # convergence_graph.x_label("Average cost value")
-        # convergence_graph.y_label("Iteration")
+        fig = plt.figure()
+        convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
+        convergence_graph.plot(iterations_storage, batch_average_costs_storage)
+        convergence_graph.x_label("Average cost value")
+        convergence_graph.y_label("Iteration")
+        plt.show()
 
     def check_accuracy(self, training_data, training_data_output, checking_data, checking_data_output):
-        cost_training = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in zip(training_data, training_data_output)]
-        cost_checking = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in zip(checking_data, checking_data_output)]
+        cost_training = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in
+                         zip(training_data, training_data_output)]
+        cost_checking = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in
+                         zip(checking_data, checking_data_output)]
 
-        print((min(cost_training), max(cost_training), sum(cost_training) / len(cost_training)), (min(cost_checking), max(cost_checking), sum(cost_checking) / len(cost_checking)))
+        print((min(cost_training), max(cost_training), sum(cost_training) / len(cost_training)),
+              (min(cost_checking), max(cost_checking), sum(cost_checking) / len(cost_checking)))
 
     def train(self, batch_size: int, training_data_fraction: float):
         # split input data into training data and checking data based on the training data fraction
         print("splitting data ...  ", end='')
         random_range = random.sample(range(self.no_inputs), self.no_inputs)
-        training_data, training_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[:int(self.no_inputs * training_data_fraction)]])
-        checking_data, checking_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[int(self.no_inputs * training_data_fraction):]])
+        training_data, training_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in
+                                                    random_range[:int(self.no_inputs * training_data_fraction)]])
+        checking_data, checking_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in
+                                                    random_range[int(self.no_inputs * training_data_fraction):]])
         print("done")
 
         # split training data into batches, e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
         print("creating batches ...  ", end='')
-        batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
-        batches_output = np.array([training_data_output[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
+        batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i
+                            in range((len(training_data) + batch_size - 1) // batch_size)])
+        batches_output = np.array([training_data_output[i * batch_size:(i + 1) * batch_size] for i
+                                   in range((len(training_data) + batch_size - 1) // batch_size)])
         print("done")
 
         for batch, batch_output in zip(batches, batches_output):
