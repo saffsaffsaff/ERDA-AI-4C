@@ -116,9 +116,8 @@ class NN:
         dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
                             dummy_derivative
         dc_dw_first_layer = (((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
-                             NN.f_quadratic_derivative(first_linear_layer)) * self.weights_second_layer.T).T *
-                             dummy_derivative).T
-        dc_dw_second_layer = (np.tile(first_layer, self.weights_second_layer.shape[0]).T * dummy_derivative).T
+                             NN.f_quadratic_derivative(first_linear_layer)).dot(self.weights_second_layer.T)).dot(dummy_derivative)).T
+        dc_dw_second_layer = (np.tile(first_layer, (self.weights_second_layer.shape[0], 1)).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
 
         return dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer
@@ -136,12 +135,11 @@ class NN:
         batch_average_cost = self.cost_value_desired + 1
         iteration = 0
         # Setup the lists to store iteration number and average cost batch on that iteration:
-        batch_average_costs_storage = iterations_storage = []
+        batch_average_costs_storage, iterations_storage = [], []
         # Initiate loop
         while batch_average_cost > self.cost_value_desired:
             # Setup lists to store the results from each case
-            db_first_layer_storage = dw_first_layer_storage = dw_second_layer_storage = db_second_layer_storage = \
-                cases_costs_storage = []
+            db_first_layer_storage, dw_first_layer_storage, dw_second_layer_storage, db_second_layer_storage, cases_costs_storage = [], [], [], [], []
 
             # Iterate over batch and to get the results of each case
             for (input_data, expected_result) in zip(batch_input_data, batch_expected_results):
@@ -152,17 +150,18 @@ class NN:
                                                           second_linear_layer, output_layer, expected_result)
 
                 # Append the case results of storage lists
-                db_first_layer_storage.append(- self.learning_rate * dc_db_first_layer)
-                dw_first_layer_storage.append(- self.learning_rate * dc_dw_first_layer)
-                db_second_layer_storage.append(- self.learning_rate * dc_db_second_layer)
-                dw_second_layer_storage.append(- self.learning_rate * dc_dw_second_layer)
+
+                db_first_layer_storage.append((- self.learning_rate * dc_db_first_layer).tolist())
+                dw_first_layer_storage.append((- self.learning_rate * dc_dw_first_layer).tolist())
+                db_second_layer_storage.append((- self.learning_rate * dc_db_second_layer).tolist())
+                dw_second_layer_storage.append((- self.learning_rate * dc_dw_second_layer).tolist())
                 cases_costs_storage.append(case_cost)
 
             # Find average values for whole batch
-            db_first_layer_average = sum(db_first_layer_storage) / batch_size
-            dw_first_layer_average = sum(dw_first_layer_storage) / batch_size
-            db_second_layer_average = sum(db_second_layer_storage) / batch_size
-            dw_second_layer_average = sum(dw_second_layer_storage) / batch_size
+            db_first_layer_average = np.sum(np.array(db_first_layer_storage), axis=0) / batch_size
+            dw_first_layer_average = np.sum(np.array(dw_first_layer_storage), axis=0) / batch_size
+            db_second_layer_average = np.sum(np.array(db_second_layer_storage), axis=0) / batch_size
+            dw_second_layer_average = np.sum(np.array(dw_second_layer_storage), axis=0) / batch_size
             batch_average_cost = sum(cases_costs_storage) / batch_size
 
             # Update the iteration number and store the average cost value of the batch
