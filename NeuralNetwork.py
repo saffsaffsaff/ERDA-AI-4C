@@ -29,12 +29,12 @@ class NN:
         # Create weights matrices and bias vectors with random values
         # For the first layer
         self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_input_neurons)
-        self.bias_first_layer = np.random.rand(no_neurons_first_layer, 1)
+        self.bias_first_layer = np.random.rand(no_neurons_first_layer)
         # For the second layer. This is the last layer before output layer, so it needs to have the same amount of
         # neurons
         no_neurons_second_layer = self.no_outputs
         self.weights_second_layer = np.random.rand(no_neurons_second_layer, no_neurons_first_layer)
-        self.bias_second_layer = np.random.rand(no_neurons_second_layer, 1)
+        self.bias_second_layer = np.random.rand(no_neurons_second_layer)
         # Assign other parameters
         self.learning_rate = learning_rate
         self.cost_value_desired = cost_value_desired_batch
@@ -115,8 +115,8 @@ class NN:
         # Find derivatives with respect to all weights and biases.
         dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
                             dummy_derivative
-        dc_dw_first_layer = (((np.tile(input_data, self.weights_first_layer.shape[0]).T *
-                             NN.f_quadratic_derivative(first_linear_layer)).T * self.weights_second_layer.T).T *
+        dc_dw_first_layer = (((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
+                             NN.f_quadratic_derivative(first_linear_layer)) * self.weights_second_layer.T).T *
                              dummy_derivative).T
         dc_dw_second_layer = (np.tile(first_layer, self.weights_second_layer.shape[0]).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
@@ -182,18 +182,34 @@ class NN:
         # convergence_graph.x_label("Average cost value")
         # convergence_graph.y_label("Iteration")
 
+    def check_accuracy(self, training_data, training_data_output, checking_data, checking_data_output):
+        cost_training = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in zip(training_data, training_data_output)]
+        cost_checking = [self.nn_execution(input_data, output_data)[-1] for input_data, output_data in zip(checking_data, checking_data_output)]
+
+        print((min(cost_training), max(cost_training), sum(cost_training) / len(cost_training)), (min(cost_checking), max(cost_checking), sum(cost_checking) / len(cost_checking)))
+
     def train(self, batch_size: int, training_data_fraction: float):
         # split input data into training data and checking data based on the training data fraction
+        print("splitting data ...  ", end='')
         random_range = random.sample(range(self.no_inputs), self.no_inputs)
         training_data, training_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[:int(self.no_inputs * training_data_fraction)]])
         checking_data, checking_data_output = zip(*[(self.input_data[i], self.correct_outputs_nn_format[i]) for i in random_range[int(self.no_inputs * training_data_fraction):]])
+        print("done")
 
         # split training data into batches, e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
-        batches = [training_data[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)]
-        batches_output = [training_data_output[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)]
+        print("creating batches ...  ", end='')
+        batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
+        batches_output = np.array([training_data_output[i * batch_size:(i + 1) * batch_size] for i in range((len(training_data) + batch_size - 1) // batch_size)])
+        print("done")
 
         for batch, batch_output in zip(batches, batches_output):
+            print("training batch ...  ", end='')
             self.update_weights_and_biases(batch, batch_output)
+            print("done")
 
+        print("Results:")
         self.check_accuracy(training_data, training_data_output, checking_data, checking_data_output)
 
+
+neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 5)
+neural_network.train(10, 0.8)
