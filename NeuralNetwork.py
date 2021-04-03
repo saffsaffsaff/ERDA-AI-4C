@@ -12,6 +12,7 @@ class NN:
         :param no_types: Number of different aircraft types
         :param no_carriers: Number of different fleet carriers
         :param no_neurons_first_layer: Number of neurons for the first layer
+        :param cost_value_desired_batch:
         """
         # Import dataframe
         df = pd.read_pickle(dataframe_path)
@@ -31,7 +32,7 @@ class NN:
         self.bias_second_layer = np.random.rand(no_neurons_second_layer, 1)
         # Assign other parameters
         self.learning_rate = learning_rate
-        self.cost_value_desired = cost_value_desired
+        self.cost_value_desired = cost_value_desired_batch
 
     # Create activating functions and their derivatives
     @staticmethod
@@ -122,9 +123,11 @@ class NN:
     def steepest_descent(self, batch_input_data, batch_expected_results, batch_size):
         """
 
-        :param batch_input_data:
-        :param batch_expected_results:
-        :param batch_size:
+        Function to apply steepest descent to update weight matrices and bias vectors for a single batch
+
+        :param batch_input_data: The list containing input data for cases in batch
+        :param batch_expected_results: The list containing expected results for cases in batch
+        :param batch_size: The size of the batch
         :return:
         """
         # Setup the average batch cost to be higher than treshold, so that loop in initiated
@@ -135,7 +138,7 @@ class NN:
                 []
 
             # Iterate over batch and append the results to storage lists
-            for (input_data, expected_result) in (batch_input_data, batch_expected_results):
+            for (input_data, expected_result) in (batch_input_data, batch_expected_results): # not sure whether this will work, may need zip function
                 first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total = \
                     self.nn_execution(input_data, expected_result)
                 dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer = \
