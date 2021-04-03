@@ -119,21 +119,22 @@ class NN:
 
         return dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer
 
-    def steepest_descent(self, batch_input_data, batch_expected_results):
+    def steepest_descent(self, batch_input_data, batch_expected_results, batch_size):
         """
 
         :param batch_input_data:
         :param batch_expected_results:
+        :param batch_size:
         :return:
         """
         # Setup the average batch cost to be higher than treshold, so that loop in initiated
-        average_cost = self.cost_value_desired + 1
-        while average_cost > self.cost_value_desired:
-            # Setup arrays to store the result from each case
+        cost_batch = self.cost_value_desired + 1
+        while cost_batch > self.cost_value_desired:
+            # Setup lists to store the result from each case
             db_first_layer_batch = dw_first_layer_batch = dw_second_layer_batch = db_second_layer_batch = cost_batch = \
                 []
 
-            # Iterate over batch and append teh results to arrays
+            # Iterate over batch and append the results to storage lists
             for (input_data, expected_result) in (batch_input_data, batch_expected_results):
                 first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total = \
                     self.nn_execution(input_data, expected_result)
@@ -146,9 +147,15 @@ class NN:
                 dw_second_layer_batch.append(- self.learning_rate * dc_dw_second_layer)
                 cost_batch.append(cost_total)
 
-            # Find average values and modify weight matrices and bias vectors
-            db_first_layer_batch = np.array(db_first_layer_batch)
-            dw_first_layer_batch = np.array(dw_first_layer_batch)
-            db_second_layer_batch = np.array(db_second_layer_batch)
-            dw_second_layer_batch = np.array(dw_second_layer_batch)
-            cost_batch = np.array(cost_batch)
+            # Find average values for whole batch
+            db_first_layer_batch = sum(db_first_layer_batch)/batch_size
+            dw_first_layer_batch = sum(dw_first_layer_batch)/batch_size
+            db_second_layer_batch = sum(db_second_layer_batch)/batch_size
+            dw_second_layer_batch = sum(dw_second_layer_batch)/batch_size
+            cost_batch = sum(cost_batch)/batch_size
+
+            # Modify weight matrices and bias vectors
+            self.bias_first_layer += db_first_layer_batch
+            self.weights_first_layer += dw_first_layer_batch
+            self.bias_second_layer += db_second_layer_batch
+            self.weights_second_layer += dw_second_layer_batch
