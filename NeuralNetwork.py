@@ -130,35 +130,52 @@ class NN:
         :param batch_size: The size of the batch
         :return:
         """
-        # Setup the average batch cost to be higher than treshold, so that loop in initiated
-        cost_batch = self.cost_value_desired + 1
-        while cost_batch > self.cost_value_desired:
-            # Setup lists to store the result from each case
-            db_first_layer_batch = dw_first_layer_batch = dw_second_layer_batch = db_second_layer_batch = cost_batch = \
-                []
+        # Setup the average batch cost to be higher than treshold, so that loop is initiated
+        batch_average_cost = self.cost_value_desired + 1
+        iteration = 0
+        # Setup the lists to store iteration number and average cost batch on that iteration:
+        batch_average_costs_storage = iterations_storage = []
+        # Initiate loop
+        while batch_average_cost > self.cost_value_desired:
+            # Setup lists to store the results from each case
+            db_first_layer_storage = dw_first_layer_storage = dw_second_layer_storage = db_second_layer_storage = \
+                cost_storage = []
 
-            # Iterate over batch and append the results to storage lists
-            for (input_data, expected_result) in (batch_input_data, batch_expected_results): # not sure whether this will work, may need zip function
-                first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total = \
+            # Iterate over batch and to get the results of each case
+            for (input_data, expected_result) in zip(batch_input_data, batch_expected_results):
+                first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost = \
                     self.nn_execution(input_data, expected_result)
                 dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer = \
                     self.nn_gradient_function_calculation(input_data, first_layer, first_linear_layer, second_layer,
                                                           second_linear_layer, output_layer, expected_result)
-                db_first_layer_batch.append(- self.learning_rate * dc_db_first_layer)
-                dw_first_layer_batch.append(- self.learning_rate * dc_dw_first_layer)
-                db_second_layer_batch.append(- self.learning_rate * dc_db_second_layer)
-                dw_second_layer_batch.append(- self.learning_rate * dc_dw_second_layer)
-                cost_batch.append(cost_total)
+
+                # Append the case results of storage lists
+                db_first_layer_storage.append(- self.learning_rate * dc_db_first_layer)
+                dw_first_layer_storage.append(- self.learning_rate * dc_dw_first_layer)
+                db_second_layer_storage.append(- self.learning_rate * dc_db_second_layer)
+                dw_second_layer_storage.append(- self.learning_rate * dc_dw_second_layer)
+                cost_storage.append(cost)
 
             # Find average values for whole batch
-            db_first_layer_batch = sum(db_first_layer_batch)/batch_size
-            dw_first_layer_batch = sum(dw_first_layer_batch)/batch_size
-            db_second_layer_batch = sum(db_second_layer_batch)/batch_size
-            dw_second_layer_batch = sum(dw_second_layer_batch)/batch_size
-            cost_batch = sum(cost_batch)/batch_size
+            db_first_layer_average = sum(db_first_layer_storage) / batch_size
+            dw_first_layer_average = sum(dw_first_layer_storage) / batch_size
+            db_second_layer_average = sum(db_second_layer_storage) / batch_size
+            dw_second_layer_average = sum(dw_second_layer_storage) / batch_size
+            batch_average_cost = sum(cost_storage) / batch_size
+
+            # Update the iteration number and store the average cost value of the batch
+            iteration += 1
+            iterations_storage.append(iteration)
+            batch_average_costs_storage.append(batch_average_cost)
 
             # Modify weight matrices and bias vectors
-            self.bias_first_layer += db_first_layer_batch
-            self.weights_first_layer += dw_first_layer_batch
-            self.bias_second_layer += db_second_layer_batch
-            self.weights_second_layer += dw_second_layer_batch
+            self.bias_first_layer += db_first_layer_average
+            self.weights_first_layer += dw_first_layer_average
+            self.bias_second_layer += db_second_layer_average
+            self.weights_second_layer += dw_second_layer_average
+
+        fig = plt.figure()
+        convergance_graph = fig.add_subplot(111, title="Average cost value per iteration")
+        convergance_graph.plot(iterations_storage, batch_average_costs_storage)
+        convergance_graph.x_label("Average cost value")
+        convergance_graph.y_label("Iteration")
