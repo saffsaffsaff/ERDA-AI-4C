@@ -115,9 +115,8 @@ class NN:
         # Find derivatives with respect to all weights and biases.
         dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
                             dummy_derivative
-        dc_dw_first_layer = ((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
-                             NN.f_quadratic_derivative(first_linear_layer) * self.weights_second_layer).T
-                             * dummy_derivative).T
+        dc_dw_first_layer = (self.weights_second_layer.dot(np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
+                             NN.f_quadratic_derivative(first_linear_layer)).T * dummy_derivative).T
         dc_dw_second_layer = (np.tile(first_layer, (self.weights_second_layer.shape[0], 1)).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
 
