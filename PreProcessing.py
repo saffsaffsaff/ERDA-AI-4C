@@ -11,6 +11,9 @@ print(no_files)
 types, carriers = zip(*[get_specs(file)[1:3] for file in filenames])
 types, carriers = list(set(types)), list(set(carriers))
 
+print(len(types), types)
+print(len(carriers), carriers)
+
 for i, file in enumerate(filenames):
     specs = get_specs(file)  # get airplane specifications from filename
     type_ind, carrier_ind = types.index(specs[1]), carriers.index(specs[2])
@@ -23,6 +26,3 @@ for i, file in enumerate(filenames):
     print(int((i+1)/no_files*100), '%')  # print progress
 
 df.to_pickle('./processed_data.pkl')  # export DataFrame
-
-print(len(types), types)
-print(len(carriers), carriers)
