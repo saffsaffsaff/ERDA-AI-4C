@@ -139,11 +139,11 @@ class NN:
         while batch_average_cost > self.cost_value_desired:
             # Setup lists to store the results from each case
             db_first_layer_storage = dw_first_layer_storage = dw_second_layer_storage = db_second_layer_storage = \
-                cost_storage = []
+                cases_costs_storage = []
 
             # Iterate over batch and to get the results of each case
             for (input_data, expected_result) in zip(batch_input_data, batch_expected_results):
-                first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost = \
+                first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, case_cost = \
                     self.nn_execution(input_data, expected_result)
                 dc_dw_first_layer, dc_db_first_layer, dc_dw_second_layer, dc_db_second_layer = \
                     self.nn_gradient_function_calculation(input_data, first_layer, first_linear_layer, second_layer,
@@ -154,14 +154,14 @@ class NN:
                 dw_first_layer_storage.append(- self.learning_rate * dc_dw_first_layer)
                 db_second_layer_storage.append(- self.learning_rate * dc_db_second_layer)
                 dw_second_layer_storage.append(- self.learning_rate * dc_dw_second_layer)
-                cost_storage.append(cost)
+                cases_costs_storage.append(case_cost)
 
             # Find average values for whole batch
             db_first_layer_average = sum(db_first_layer_storage) / batch_size
             dw_first_layer_average = sum(dw_first_layer_storage) / batch_size
             db_second_layer_average = sum(db_second_layer_storage) / batch_size
             dw_second_layer_average = sum(dw_second_layer_storage) / batch_size
-            batch_average_cost = sum(cost_storage) / batch_size
+            batch_average_cost = sum(cases_costs_storage) / batch_size
 
             # Update the iteration number and store the average cost value of the batch
             iteration += 1
