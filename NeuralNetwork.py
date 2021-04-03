@@ -112,11 +112,39 @@ class NN:
         dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid(second_layer) * \
                            NN.f_cubic_derivative(second_linear_layer)
 
-        # Find derivatives with respect to all weights and biases.
-        dc_db_first_layer = self.weights_second_layer.dot(NN.f_quadratic_derivative(first_linear_layer)) * \
-                            dummy_derivative
-        dc_dw_first_layer = (self.weights_second_layer.dot((np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
-                             NN.f_quadratic_derivative(first_linear_layer)).T).T * dummy_derivative).T
+        # Find derivatives with respect to all weights and biases for the first layer. As we will apply matrix-vector
+        # multiplication that can couple variables, we need to keep them decoupled. For bias vector, this can be done
+        # with matrix with diagonal being bias vector.
+        bias_first_layer_decoupled = np.diag(self.bias_first_layer)
+        dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T *
+                                                            NN.f_quadratic_derivative(first_linear_layer)).T).T *
+                             dummy_derivative).T.sum(axis=1)
+        # We need to avoid any coupling between weights. So we can iterate through each weight, find cost
+        # derivative and update correct position in the matrix. Setup the matrix to store the derivative with respect
+        # to each weight.
+        dc_dw_first_layer = np.zeros(self.weights_first_layer.shape)
+        # Dummy matrix stores derivatives of first linear layer with respect to first layer weights. It will be used
+        # often for chain rule, so keep it outside the loop for efficiency.
+        dummy_matrix = np.tile(input_data, (self.weights_first_layer.shape[0], 1))
+        # Iterate over each weight
+        for row in range(0, self.weights_first_layer.shape[0]):
+            for column in range(0, self.weights_first_layer[1]):
+                # Set up the decoupled vector to simplify calculations. It is filled with zeros, with exception of the
+                # position where weight is allowed to change, and therefore cost derivative is not 0.
+                decoupled_vector = np.zeros(self.weights_first_layer.shape[0])
+                decoupled_vector[row] = dummy_matrix[row, column]
+                # Apply chain rule to the decoupled vector and calculate the cost derivative with respect to weight
+                dc_dw_dummy = np.sum(self.weights_second_layer.dot(decoupled_vector *
+                                                                   NN.f_quadratic_derivative(first_linear_layer)) *
+                                     dummy_derivative)
+                # Update the dc/dw matrix
+                dc_dw_first_layer[row, column] = dc_dw_dummy
+        
+        # dc_dw_first_layer = (self.weights_second_layer.dot(np.tile(input_data, (self.weights_first_layer.shape[0], 1)).T *
+        #                      NN.f_quadratic_derivative(first_linear_layer).T).T * dummy_derivative).T
+
+        # Find derivatives with respect to all weights and biases for the second layer. Fortunately no matrix/vector
+        # is applied here, so derivatives will not be coupled.
         dc_dw_second_layer = (np.tile(first_layer, (self.weights_second_layer.shape[0], 1)).T * dummy_derivative).T
         dc_db_second_layer = dummy_derivative * 1
 
