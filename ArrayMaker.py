@@ -58,20 +58,7 @@ if __name__ == '__main__':  # if this file is run
                     list.remove(list[i])
         return list
 
-
     print('number of codes is: ', len(number_diff_elements(codes)))
     print('number of types is: ', len(number_diff_elements(types)))
     print('number of fleetcarriers is: ', len(number_diff_elements(fleet_carriers)), number_diff_elements(fleet_carriers))
     print('number of manufacturers is: ', len(number_diff_elements(manufacturers)))
-
-    ## Create Excel Sheet - Appendix with table of aeroplanes
-    '''import os
-    import pandas as pd
-    
-    array = [['a1', 'a2', 'a3'],
-             ['a4', 'a5', 'a6'],
-             ['a7', 'a8', 'a9'],
-             ['a10', 'a11', 'a12', 'a13', 'a14']]
-    
-    df = pd.DataFrame(array).T
-    df.to_excel(excel_writer = os.getcwd() + 'appendixa.xlsx')'''

@@ -118,9 +118,8 @@ class NN:
         # multiplication that can couple variables, we need to keep them decoupled. For bias vector, this can be done
         # with matrix with diagonal filled with ones.
         bias_first_layer_decoupled = np.diag(self.bias_first_layer) / self.bias_first_layer
-        dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T *
-                                                            NN.f_quadratic_derivative(first_linear_layer)).T).T *
-                             dummy_derivative).T.sum(axis=1)
+        dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T * NN.f_quadratic_derivative(first_linear_layer)).T).T *
+                             dummy_derivative).T.sum(axis=0)
         # We need to avoid any coupling between weights. So we can iterate through each weight, find cost
         # derivative and update correct position in the matrix. Setup the matrix to store the derivative with respect
         # to each weight.
@@ -130,7 +129,7 @@ class NN:
         dummy_matrix = np.tile(input_data, (self.weights_first_layer.shape[0], 1))
         # Iterate over each weight
         for row in range(0, self.weights_first_layer.shape[0]):
-            for column in range(0, self.weights_first_layer[1]):
+            for column in range(0, self.weights_first_layer.shape[1]):
                 # Set up the decoupled vector to simplify calculations. It is filled with zeros, with exception of the
                 # position where weight is allowed to change, and therefore cost derivative is not 0.
                 decoupled_vector = np.zeros(self.weights_first_layer.shape[0])
@@ -168,6 +167,7 @@ class NN:
         batch_average_costs_storage, iterations_storage = [], []
         # Initiate loop
         while batch_average_cost > self.cost_value_desired:
+            print(batch_average_cost, end=' ')
             # Setup lists to store the results from each case
             db_first_layer_storage, dw_first_layer_storage, dw_second_layer_storage, db_second_layer_storage,\
             cases_costs_storage = [], [], [], [], []
@@ -181,7 +181,6 @@ class NN:
                                                           second_linear_layer, output_layer, expected_result)
 
                 # Append the case results of storage lists
-
                 db_first_layer_storage.append(- self.learning_rate * dc_db_first_layer)
                 dw_first_layer_storage.append(- self.learning_rate * dc_dw_first_layer)
                 db_second_layer_storage.append(- self.learning_rate * dc_db_second_layer)
@@ -206,12 +205,12 @@ class NN:
             self.bias_second_layer += db_second_layer_average
             self.weights_second_layer += dw_second_layer_average
 
-        fig = plt.figure()
-        convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
-        convergence_graph.plot(iterations_storage, batch_average_costs_storage)
-        convergence_graph.x_label("Batch average cost value")
-        convergence_graph.y_label("Iteration")
-        plt.show()
+        # fig = plt.figure()
+        # convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
+        # convergence_graph.plot(iterations_storage, batch_average_costs_storage)
+        # convergence_graph.x_label("Batch average cost value")
+        # convergence_graph.y_label("Iteration")
+        # plt.show()
 
     def check_accuracy(self, training_data, training_data_correct_output_nn_format, training_data_correct_output,
                        checking_data, checking_data_correct_output_nn_format, checking_data_correct_output):
@@ -235,10 +234,10 @@ class NN:
             carriers_results_checking[int(output[1])] += np.array([1, 0]) if output[1] == output_checking_choice[i][1] else np.array([0, 1])
 
         # some pyplot stuff
-        bars_types_training = [aircraft_type[0] / sum(aircraft_type) * 100 for aircraft_type in types_results_training]
-        bars_carrier_training = [carrier[0] / sum(carrier) * 100 for carrier in carriers_results_training]
-        bars_types_checking = [aircraft_type[0] / sum(aircraft_type) * 100 for aircraft_type in types_results_checking]
-        bars_carrier_checking = [carrier[0] / sum(carrier) * 100 for carrier in carriers_results_checking]
+        bars_types_training = [aircraft_type[0] / sum(aircraft_type) * 100 if (aircraft_type != [0, 0]).any() else 0 for aircraft_type in types_results_training]
+        bars_carrier_training = [carrier[0] / sum(carrier) * 100 if (carrier != [0, 0]).any() else 0 for carrier in carriers_results_training]
+        bars_types_checking = [aircraft_type[0] / sum(aircraft_type) * 100 if (aircraft_type != [0, 0]).any() else 0 for aircraft_type in types_results_checking]
+        bars_carrier_checking = [carrier[0] / sum(carrier) * 100 if (carrier != [0, 0]).any() else 0 for carrier in carriers_results_checking]
 
         type_labels = ['A319', 'A320', 'A318', '190', 'A321', '747', 'A330', 'A350', '757', '737', '787', '170', '767', '777']
         carrier_labels = ['EgyptAir', 'Suparna Airlines', 'China Eastern Airlines', 'easyJet', 'Delta Air Lines', 'Corendon Dutch Airlines',
@@ -286,9 +285,8 @@ class NN:
             self.update_weights_and_biases(batch, batch_output)
             print("done")
 
-        print("Results:")
-        self.check_accuracy(training_data, training_data_output, training_data_output_nn_format, checking_data, checking_data_output, checking_data_output_nn_format)
+        self.check_accuracy(training_data, training_data_output_nn_format, training_data_output, checking_data, checking_data_output_nn_format, checking_data_output)
 
 
-neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 5)
+neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 0.1)
 neural_network.train(10, 0.8)
