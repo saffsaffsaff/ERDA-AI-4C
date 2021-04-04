@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 class NN:
     def __init__(self, dataframe_path, no_types, no_carriers, no_neurons_first_layer, learning_rate,
-                 cost_value_desired_batch):
+                 cost_value_desired_batch, iteration_limit):
         """
         Method to define Class parameters
 
@@ -12,7 +12,8 @@ class NN:
         :param no_types: Number of different aircraft types
         :param no_carriers: Number of different fleet carriers
         :param no_neurons_first_layer: Number of neurons for the first layer
-        :param cost_value_desired_batch:
+        :param cost_value_desired_batch: Satisfactionary average cost for a batch
+        :param iteration_limit: Iteration number, after which another batch will be taken.
         """
         # Import dataframe
         df = pd.read_pickle(dataframe_path)
@@ -40,6 +41,7 @@ class NN:
         # Assign other parameters
         self.learning_rate = learning_rate
         self.cost_value_desired = cost_value_desired_batch
+        self.iteration_limit = iteration_limit
 
     # Create activating functions and their derivatives
     @staticmethod
@@ -64,7 +66,7 @@ class NN:
 
     @staticmethod
     def f_sigmoid_derivative(x):
-        return NN.f_sigmoid(x)(1 - NN.f_sigmoid(x))
+        return NN.f_sigmoid(x) * (1 - NN.f_sigmoid(x))
 
     @staticmethod
     def f_cost(x, x_true):
@@ -90,8 +92,6 @@ class NN:
         cost_vector = NN.f_cost(output_layer, expected_result)
         cost_total = np.sum(cost_vector)
 
-        # Determine which aircraft is chosen
-
         return first_linear_layer, first_layer, second_linear_layer, second_layer, output_layer, cost_total
 
     def nn_gradient_function_calculation(self, input_data, first_layer, first_linear_layer, second_layer,
@@ -111,14 +111,15 @@ class NN:
         """
 
         # Apply chain rule to get common part for all derivatives with respect to weights and biases at both layers
-        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid_derivative(second_layer) * \
-                           NN.f_cubic_derivative(second_linear_layer)
+        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * \
+                           NN.f_sigmoid_derivative(second_layer) * NN.f_cubic_derivative(second_linear_layer)
 
         # Find derivatives with respect to all weights and biases for the first layer. As we will apply matrix-vector
         # multiplication that can couple variables, we need to keep them decoupled. For bias vector, this can be done
         # with matrix with diagonal filled with ones.
         bias_first_layer_decoupled = np.diag(self.bias_first_layer) / self.bias_first_layer
-        dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T * NN.f_quadratic_derivative(first_linear_layer)).T).T *
+        dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T *
+                                                            NN.f_quadratic_derivative(first_linear_layer)).T).T *
                              dummy_derivative).T.sum(axis=0)
         # We need to avoid any coupling between weights. So we can iterate through each weight, find cost
         # derivative and update correct position in the matrix. Setup the matrix to store the derivative with respect
@@ -166,7 +167,7 @@ class NN:
         # Setup the lists to store iteration number and average cost batch on that iteration:
         batch_average_costs_storage, iterations_storage = [], []
         # Initiate loop
-        while batch_average_cost > self.cost_value_desired:
+        while batch_average_cost > self.cost_value_desired and iteration < self.iteration_limit:
             print(batch_average_cost, end=' ')
             # Setup lists to store the results from each case
             db_first_layer_storage, dw_first_layer_storage, dw_second_layer_storage, db_second_layer_storage,\
@@ -288,5 +289,5 @@ class NN:
         self.check_accuracy(training_data, training_data_output_nn_format, training_data_output, checking_data, checking_data_output_nn_format, checking_data_output)
 
 
-neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 0.1)
+neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 0.1, 5000)
 neural_network.train(10, 0.8)
