@@ -116,8 +116,8 @@ class NN:
 
         # Find derivatives with respect to all weights and biases for the first layer. As we will apply matrix-vector
         # multiplication that can couple variables, we need to keep them decoupled. For bias vector, this can be done
-        # with matrix with diagonal being bias vector.
-        bias_first_layer_decoupled = np.diag(self.bias_first_layer)
+        # with matrix with diagonal filled with ones.
+        bias_first_layer_decoupled = np.diag(self.bias_first_layer) / self.bias_first_layer
         dc_db_first_layer = (self.weights_second_layer.dot((bias_first_layer_decoupled.T *
                                                             NN.f_quadratic_derivative(first_linear_layer)).T).T *
                              dummy_derivative).T.sum(axis=1)
