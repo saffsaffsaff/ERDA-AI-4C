@@ -111,7 +111,7 @@ class NN:
         """
 
         # Apply chain rule to get common part for all derivatives with respect to weights and biases at both layers
-        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid(second_layer) * \
+        dummy_derivative = NN.f_cost_derivative(output_layer, expected_result) * NN.f_sigmoid_derivative(second_layer) * \
                            NN.f_cubic_derivative(second_linear_layer)
 
         # Find derivatives with respect to all weights and biases for the first layer. As we will apply matrix-vector
