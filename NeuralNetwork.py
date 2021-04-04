@@ -31,13 +31,13 @@ class NN:
 
         # Create weights matrices and bias vectors with random values
         # For the first layer
-        self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_input_neurons)
-        self.bias_first_layer = np.random.rand(no_neurons_first_layer)
+        self.weights_first_layer = np.random.rand(no_neurons_first_layer, self.no_input_neurons)/30
+        self.bias_first_layer = np.random.rand(no_neurons_first_layer)*2
         # For the second layer. This is the last layer before output layer, so it needs to have the same amount of
         # neurons
         no_neurons_second_layer = self.no_outputs
-        self.weights_second_layer = np.random.rand(no_neurons_second_layer, no_neurons_first_layer)
-        self.bias_second_layer = np.random.rand(no_neurons_second_layer)
+        self.weights_second_layer = np.random.rand(no_neurons_second_layer, no_neurons_first_layer)/500
+        self.bias_second_layer = (np.random.rand(no_neurons_second_layer)-0.5)*1
         # Assign other parameters
         self.learning_rate = learning_rate
         self.cost_value_desired = cost_value_desired_batch
@@ -66,7 +66,7 @@ class NN:
 
     @staticmethod
     def f_sigmoid_derivative(x):
-        return NN.f_sigmoid(x) * (1 - NN.f_sigmoid(x))
+        return NN.f_sigmoid(x)*(1 - NN.f_sigmoid(x))
 
     @staticmethod
     def f_cost(x, x_true):
@@ -191,6 +191,7 @@ class NN:
             db_second_layer_average = sum(db_second_layer_storage) / batch_size
             dw_second_layer_average = sum(dw_second_layer_storage) / batch_size
             batch_average_cost = sum(cases_costs_storage) / batch_size
+            print(batch_average_cost)
 
             # Update the iteration number and store the average cost value of the batch
             iteration += 1
@@ -249,14 +250,10 @@ class NN:
         bars_carrier_checking = [carrier[0] / sum(carrier) * 100 if (carrier != [0, 0]).any() else 0 for carrier
                                  in carriers_results_checking]
 
-        type_labels = ['A319', 'A320', 'A318', '190', 'A321', '747', 'A330', 'A350', '757', '737', '787', '170', '767',
-                       '777']
-        carrier_labels = ['EgyptAir', 'Suparna Airlines', 'China Eastern Airlines', 'easyJet', 'Delta Air Lines',
-                          'Corendon Dutch Airlines',
-                          'Romanian Air Transport', 'Garuda Indonesia', 'AnadoluJet', 'Air Arabia Maroc', 'KLM',
-                          'Saudi Arabian Airlines',
-                          'Aer Lingus', 'Emirates', 'Air China Cargo', 'Blue Air', 'Titan Airways', 'Air France',
-                          'Aeroflot', 'Alitalia']
+        type_labels = ['A319', 'A320', 'A318', '190', 'A321', '747', 'A330', 'A350', '757', '737', '787', '170', '767', '777']
+        carrier_labels = ['EgyptAir', 'Suparna Airlines', 'China Eastern Airlines', 'easyJet', 'Delta Air Lines', 'Corendon Dutch Airlines',
+                          'Romanian Air Transport', 'Garuda Indonesia', 'AnadoluJet', 'Air Arabia Maroc', 'KLM', 'Saudi Arabian Airlines',
+                          'Aer Lingus', 'Emirates', 'Air China Cargo', 'Blue Air', 'Titan Airways', 'Air France', 'Aeroflot', 'Alitalia']
 
         x1 = np.arange(len(type_labels))  # the label locations
         x2 = np.arange(len(carrier_labels))
@@ -280,8 +277,7 @@ class NN:
         plt.show()
 
     def train(self, batch_size: int, training_data_fraction: float):
-        """ Splits data in training and checking data, creates batches,
-        trains the neural network, and checks the accuracy. """
+        """ Splits data in training and checking data, creates batches, trains the neural network, and checks the accuracy. """
         # split input data into training data and checking data based on the training data fraction
         print("splitting data ...  ", end='')
         random_range = random.sample(range(self.no_inputs), self.no_inputs)
@@ -293,8 +289,7 @@ class NN:
                   in random_range[int(self.no_inputs * training_data_fraction):]])
         print("done")
 
-        # split training data into batches,
-        # e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
+        # split training data into batches, e.g., [1, 5, 7, 6, 3, 9, 5] with batch size 3 will result in [[1, 5, 7], [6, 3, 9], [5]]
         print("creating batches ...  ", end='')
         batches = np.array([training_data[i * batch_size:(i + 1) * batch_size] for i
                             in range((len(training_data) + batch_size - 1) // batch_size)])
@@ -303,7 +298,7 @@ class NN:
         print("done")
 
         for batch, batch_output in zip(batches, batches_output):
-            print("training batch ...  ", end='')
+            print("training batch ...  ")
             self.update_weights_and_biases(batch, batch_output)
             print("done")
 
@@ -311,5 +306,5 @@ class NN:
                             checking_data_output_nn_format, checking_data_output)
 
 
-neural_network = NN('./processed_data.pkl', 14, 20, 50, 5, 0.1, 5000)
+neural_network = NN('./processed_data.pkl', 14, 20, 34, 0.01, 1)
 neural_network.train(10, 0.8)
