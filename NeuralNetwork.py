@@ -203,12 +203,11 @@ class NN:
             self.bias_second_layer += db_second_layer_average
             self.weights_second_layer += dw_second_layer_average
 
-        # fig = plt.figure()
-        # convergence_graph = fig.add_subplot(111, title="Average cost value per iteration")
-        # convergence_graph.plot(iterations_storage, batch_average_costs_storage)
-        # convergence_graph.x_label("Batch average cost value")
-        # convergence_graph.y_label("Iteration")
-        # plt.show()
+        fig = plt.figure()
+        convergence_graph = fig.add_subplot(111, title="Average cost value per iteration",
+                                            x_label="Batch average cost value", y_label="Iteration")
+        convergence_graph.plot(iterations_storage, batch_average_costs_storage)
+        plt.show()
 
     def check_accuracy(self, training_data, training_data_correct_output_nn_format, training_data_correct_output,
                        checking_data, checking_data_correct_output_nn_format, checking_data_correct_output):
